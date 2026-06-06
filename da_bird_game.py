@@ -7,6 +7,9 @@ pygame.init()
 SCREEN_HEIGHT = 650
 SCREEN_WIDTH = 600
 PIPE_SPACE = 200
+DABIRD_PHOTO = pygame.image.load("ragingbird-photo-bad.png")
+DABIRD_HEIGHT = DABIRD_PHOTO.get_height()
+DABIRD_X = SCREEN_WIDTH / 3 - DABIRD_HEIGHT * 0.69
 
 # pygame setup
 screen = pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT))
@@ -17,7 +20,7 @@ running = True
 #class is mod your self
 class Bird:
     def __init__(self):
-        self.height = SCREEN_HEIGHT / 2
+        self.y = SCREEN_HEIGHT / 2
         self.speed = 0
         self.alive = True
     
@@ -25,18 +28,18 @@ class Bird:
         self.speed = -4.5
     
     def fall(self):
-        self.height = self.height + self.speed
+        self.y = self.y + self.speed
         self.speed = self.speed + 0.2
-        if self.height < 0 + 20:
+        if self.y < 0 + DABIRD_HEIGHT:
             self.alive = False
             self.speed = 0 + 40
-            self.height = 0 + 20
-        if self.height > 630 - 20:
+            self.y = 0 + DABIRD_HEIGHT
+        if self.y > 630 - DABIRD_HEIGHT:
             self.alive = False
-            self.height = 630 - 20
+            self.y = 630 - DABIRD_HEIGHT
 
     def draw(self):
-        pygame.draw.circle(screen, "yellow", (SCREEN_WIDTH / 3, self.height), 20)
+        screen.blit(DABIRD_PHOTO, (DABIRD_X, self.y - DABIRD_HEIGHT/2))
 
 class Pipe:
     def __init__(self, x_position):
@@ -63,6 +66,25 @@ class Pipe:
             67, #67!
             SCREEN_HEIGHT - self.height - PIPE_SPACE
         ))
+    
+    def is_bird_dead(self, dabird):
+        # top pipe
+        if (
+            DABIRD_X >= self.pos - (DABIRD_HEIGHT * 0.75) * 2 and
+            DABIRD_X <= self.pos + 67 and
+            dabird.y >= 0 - DABIRD_HEIGHT and
+            dabird.y <= 0 + self.height
+        ):
+            dabird.alive = False
+        
+        # bottom pipe
+        if (
+            DABIRD_X >= self.pos - (DABIRD_HEIGHT * 0.75) * 2 and
+            DABIRD_X <= self.pos + 67 and
+            dabird.y >= self.height + PIPE_SPACE - DABIRD_HEIGHT and
+            dabird.y <= self.height + PIPE_SPACE + SCREEN_HEIGHT - self.height - PIPE_SPACE
+        ):
+            dabird.alive = False
 
 # game state
 bird = Bird()
@@ -84,9 +106,9 @@ while running:
     screen.fill("sky blue") 
 
     # RENDER YOUR GAME HERE
-    bird.draw()
     pipe1.draw()
     pipe2.draw()
+    bird.draw()
 
     # grass
     pygame.draw.rect(screen, "green", (
@@ -102,7 +124,10 @@ while running:
     clock.tick(60)  # limits FPS to 60
 
     bird.fall()
-    pipe1.move()
-    pipe2.move()
+    if bird.alive == True:
+        pipe1.move()
+        pipe2.move()
+    pipe1.is_bird_dead(bird)
+    pipe2.is_bird_dead(bird)
 
 pygame.quit()
